@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English City World - Vocabulary Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      min-height: 100vh;
+      color: #f8fafc;
+      user-select: none;
+    }
+
+    h1, h2, h3, .font-heading {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+
+    /* Floating Bubble Container & Styles */
+    .bubble-container {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      height: 420px;
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 2px 6px rgba(255, 255, 255, 0.5);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      animation: floatMotion 6s infinite ease-in-out alternate;
+    }
+
+    .bubble:hover {
+      transform: scale(1.1);
+      box-shadow: 0 15px 35px -5px rgba(255, 255, 255, 0.5);
+    }
+
+    .bubble:active {
+      transform: scale(0.95);
+    }
+
+    @keyframes floatMotion {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(4deg); }
+      100% { transform: translateY(15px) rotate(-4deg); }
+    }
+
+    /* Letter Tile Styling */
+    .letter-tile {
+      font-family: 'Fredoka', cursive;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .letter-tile:hover {
+      transform: translateY(-3px) scale(1.05);
+    }
+
+    .letter-tile:active {
+      transform: translateY(2px) scale(0.95);
+    }
+
+    /* Shake Animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-10px); }
+      40%, 80% { transform: translateX(10px); }
+    }
+    .shake-anim {
+      animation: shake 0.4s ease-in-out;
+    }
+
+    /* Pulse Glow */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8); }
+    }
+    .glow-pulse {
+      animation: pulseGlow 3s infinite;
+    }
+
+    /* Custom Toast Notification */
+    .toast-enter {
+      animation: slideInDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes slideInDown {
+      from { transform: translate(-50%, -100%); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen relative">
+
+  <!-- Custom Notification Toast -->
+  <div id="toastContainer" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col gap-2"></div>
+
+  <header class="bg-slate-900/80 backdrop-blur-md border-b border-indigo-500/20 sticky top-0 z-40 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 via-pink-500 to-indigo-600 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/30">
+          🏰
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-300 via-pink-400 to-indigo-300 bg-clip-text text-transparent">
+            English City World
+          </h1>
+          <p class="text-xs text-slate-400 -mt-1 hidden sm:block">Interactive Vocabulary Islands & Games</p>
+        </div>
+      </div>
+
+      <!-- User Information Badge -->
+      <div id="userBadge" class="hidden flex items-center gap-3 bg-slate-800/80 border border-slate-700/80 rounded-full px-4 py-1.5 shadow-inner">
+        <div class="text-right">
+          <div class="text-xs text-slate-400 flex items-center gap-1 justify-end">
+            <span id="badgeClass" class="font-semibold text-indigo-400">Class</span>
+            <span id="adminTag" class="hidden bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] px-2 py-0.5 rounded-full font-bold">ADMIN</span>
+          </div>
+          <div id="badgeName" class="text-sm font-bold text-slate-100">Name</div>
+        </div>
+        <button onclick="logout()" title="Logout" class="w-8 h-8 rounded-full bg-slate-700 hover:bg-rose-600/80 text-slate-300 hover:text-white transition flex items-center justify-center text-xs">
+          ✕
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main id="appContainer" class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+
+    <!-- VIEW 1: LOGIN SCREEN -->
+    <section id="viewLogin" class="max-w-md w-full mx-auto bg-slate-800/90 border border-indigo-500/30 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl glow-pulse">
+      <div class="text-center mb-6">
+        <div class="inline-block p-4 rounded-3xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 mb-3 shadow-lg text-4xl">
+          🏝️
+        </div>
+        <h2 class="text-3xl font-extrabold text-white font-heading">Welcome Citizen!</h2>
+        <p class="text-sm text-indigo-200/80 mt-1">Enter your login details to explore English Islands!</p>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">👤 Your Name</label>
+          <input type="text" id="inputName" required placeholder="e.g. Alex Johnson"
+            class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">🏫 Class</label>
+          <input type="text" id="inputClass" required placeholder="e.g. 6A2"
+            class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">🔑 Password</label>
+          <input type="password" id="inputPassword" required placeholder="Enter password to protect score"
+            class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white font-extrabold rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <span>Enter English City</span>
+          <span>🚀</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- VIEW 2: ISLANDS HUB SCREEN -->
+    <section id="viewIslandsHub" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800/60 border border-slate-700/60 p-6 rounded-3xl backdrop-blur-md">
+        <div>
+          <span class="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1">
+            <span>🌍</span> English World Map
+          </span>
+          <h2 class="text-3xl font-extrabold text-white font-heading">🏝️ Vocabulary Islands</h2>
+          <p class="text-slate-300 text-sm mt-1">Select an island to explore topic folders & practice vocabulary.</p>
+        </div>
+
+        <!-- Admin Add Island Button -->
+        <button id="adminAddIslandBtn" onclick="openAddIslandModal()" class="hidden bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center gap-2 self-start sm:self-auto">
+          <span>🏝️+</span>
+          <span>Add New Island</span>
+        </button>
+      </div>
+
+      <!-- Islands Grid -->
+      <div id="islandsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Dynamic Islands Rendered Here -->
+      </div>
+    </section>
+
+    <!-- VIEW 2.5: ISLAND DETAIL (FOLDERS INSIDE ISLAND) -->
+    <section id="viewIslandDetail" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-800/80 border border-slate-700 p-6 rounded-3xl backdrop-blur-md">
+        <div class="flex items-center gap-4">
+          <button onclick="goHome()" class="p-3 bg-slate-700 hover:bg-slate-600 rounded-2xl text-slate-200 transition" title="Back to Islands Map">
+            ⬅️
+          </button>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="islandDetailIcon" class="text-3xl">🏝️</span>
+              <h2 id="islandDetailTitle" class="text-2xl md:text-3xl font-extrabold text-white font-heading">Island Name</h2>
+              <span id="islandDetailLock" class="hidden text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">🔒 Pass</span>
+            </div>
+            <p id="islandDetailDesc" class="text-xs text-indigo-300 font-semibold mt-0.5">Island Description</p>
+          </div>
+        </div>
+
+        <!-- Admin Add Folder Button -->
+        <button id="adminAddFolderBtn" onclick="openAddFolderModal()" class="hidden bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 self-start md:self-auto">
+          <span>📁+</span>
+          <span>Add Folder to Island</span>
+        </button>
+      </div>
+
+      <!-- Folder Grid -->
+      <div id="folderGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Dynamic Folders Inserted Here -->
+      </div>
+    </section>
+
+    <!-- VIEW 3: FOLDER DETAIL & VOCAB LIST -->
+    <section id="viewFolderDetail" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-800/80 border border-slate-700 p-6 rounded-3xl">
+        <div class="flex items-center gap-4">
+          <button onclick="backToIsland()" class="p-3 bg-slate-700 hover:bg-slate-600 rounded-2xl text-slate-200 transition" title="Back to Island">
+            ⬅️
+          </button>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="detailFolderName" class="text-2xl md:text-3xl font-extrabold text-white font-heading">Folder Name</h2>
+              <span id="detailLockBadge" class="hidden text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">🔒 Password</span>
+            </div>
+            <p id="detailWordCount" class="text-xs text-indigo-300 font-semibold mt-0.5">0 Words Available</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Play Game Button -->
+          <button id="btnStartGame" onclick="startGame()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg shadow-orange-500/30 transition transform hover:scale-105 flex items-center gap-2">
+            <span>🎮</span>
+            <span>Start Practice Game</span>
+          </button>
+
+          <!-- Admin Add Word Button -->
+          <button id="adminAddWordBtn" onclick="openAddWordModal()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-3 rounded-2xl shadow transition flex items-center gap-2">
+            <span>➕</span>
+            <span>Add Word(s)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Words List Table / Cards -->
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-3xl overflow-hidden p-4 md:p-6">
+        <h3 class="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
+          <span>📚</span> Vocabulary List
+        </h3>
+        <div id="vocabList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Vocab Items Rendered Here -->
+        </div>
+      </div>
+
+      <!-- ADMIN ONLY: Round 3 Custom Questions Section (Hidden from regular players) -->
+      <div id="adminRound3Section" class="hidden bg-slate-800/80 border border-amber-500/40 rounded-3xl p-4 md:p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-slate-700/60 pb-3">
+          <div>
+            <h3 class="text-lg font-bold text-amber-300 flex items-center gap-2 font-heading">
+              <span>🎯</span> Round 3 Questions (Admin Only)
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Manage custom multiple-choice questions for Round 3. Students cannot see this list.</p>
+          </div>
+          <button onclick="openAddR3QuestionModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs shadow transition flex items-center gap-1 shrink-0">
+            <span>➕</span> Add R3 Question
+          </button>
+        </div>
+
+        <div id="adminR3QuestionList" class="space-y-3">
+          <!-- Rendered via JS for admin -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: ROUND 1 GAME - BUBBLE POP -->
+    <section id="viewRound1" class="hidden space-y-4">
+      <div class="bg-slate-800/80 border border-indigo-500/30 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-bold px-3 py-1 rounded-full uppercase">Round 1 / 3</span>
+          <h3 class="text-lg font-bold text-slate-200 mt-1">Bubble Pop Challenge 🎈</h3>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <span class="text-xs text-slate-400 block uppercase font-bold">Progress</span>
+            <span id="r1Progress" class="text-lg font-extrabold text-amber-400">1 / 5</span>
+          </div>
+          <div class="text-center">
+            <span class="text-xs text-slate-400 block uppercase font-bold">Score</span>
+            <span id="r1Score" class="text-lg font-extrabold text-emerald-400">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-r from-indigo-900/90 via-purple-900/90 to-slate-900/90 border-2 border-indigo-400/50 rounded-2xl p-6 text-center shadow-xl">
+        <span class="text-xs font-extrabold text-indigo-300 uppercase tracking-widest block mb-1">🎯 Find the matching English word for:</span>
+        <div id="r1TargetMeaning" class="text-2xl md:text-3xl font-extrabold text-amber-300 font-heading">
+          "Meaning goes here"
+        </div>
+      </div>
+
+      <div id="bubbleStage" class="bubble-container bg-slate-900/80 border border-slate-700 rounded-3xl">
+        <!-- Bubbles injected dynamically -->
+      </div>
+    </section>
+
+    <!-- VIEW 5: ROUND 2 GAME - LETTER UNSCRAMBLE -->
+    <section id="viewRound2" class="hidden space-y-4">
+      <div class="bg-slate-800/80 border border-indigo-500/30 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <span class="bg-pink-500/20 text-pink-300 border border-pink-500/40 text-xs font-bold px-3 py-1 rounded-full uppercase">Round 2 / 3</span>
+          <h3 class="text-lg font-bold text-slate-200 mt-1">Word Builder Challenge 🧩</h3>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <span class="text-xs text-slate-400 block uppercase font-bold">Progress</span>
+            <span id="r2Progress" class="text-lg font-extrabold text-amber-400">1 / 5</span>
+          </div>
+          <div class="text-center">
+            <span class="text-xs text-slate-400 block uppercase font-bold">Score</span>
+            <span id="r2Score" class="text-lg font-extrabold text-emerald-400">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-r from-purple-900/90 via-pink-900/90 to-slate-900/90 border-2 border-pink-400/50 rounded-2xl p-6 text-center shadow-xl">
+        <span class="text-xs font-extrabold text-pink-300 uppercase tracking-widest block mb-1">🔤 Spell the English word for:</span>
+        <div id="r2TargetMeaning" class="text-2xl md:text-3xl font-extrabold text-amber-300 font-heading">
+          "Meaning goes here"
+        </div>
+      </div>
+
+      <!-- Answer Slot Box -->
+      <div class="bg-slate-900/90 border border-slate-700/80 rounded-3xl p-6 flex flex-col items-center justify-center min-h-[160px] gap-4">
+        <div id="r2AnswerSlots" class="flex flex-wrap justify-center gap-2 my-2 min-h-[60px] items-center">
+          <!-- Selected letter slots inserted here -->
+        </div>
+        <p class="text-[11px] text-indigo-300 font-semibold">💡 Tip: Type on your keyboard or click an occupied slot to remove a letter!</p>
+
+        <!-- Controls -->
+        <div class="flex items-center gap-3">
+          <button onclick="clearR2Answer()" class="bg-slate-700 hover:bg-slate-600 text-xs font-bold px-4 py-2 rounded-xl text-slate-200 transition flex items-center gap-1">
+            <span>🔄</span> Reset Letters
+          </button>
+          <button onclick="checkR2Answer()" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-extrabold px-6 py-2.5 rounded-xl shadow-lg transition flex items-center gap-1">
+            <span>✓</span> Submit Word
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrambled Letters Pool -->
+      <div class="bg-slate-800/60 border border-slate-700 rounded-3xl p-6 text-center">
+        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-3">Click or type letters in order:</span>
+        <div id="r2LetterPool" class="flex flex-wrap justify-center gap-3 max-w-2xl mx-auto min-h-[60px] items-center">
+          <!-- Scrambled letter buttons inserted here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5.5: ROUND 3 GAME - MASTER CHALLENGE (MULTIPLE CHOICE & CUSTOM QUESTIONS) -->
+    <section id="viewRound3" class="hidden space-y-4">
+      <div class="bg-slate-800/80 border border-amber-500/30 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold px-3 py-1 rounded-full uppercase">Round 3 / 3</span>
+          <h3 class="text-lg font-bold text-slate-200 mt-1">Master Challenge 🎯 (Multiple Choice)</h3>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <span class="text-xs text-slate-400 block uppercase font-bold">Progress</span>
+            <span id="r3Progress" class="text-lg font-extrabold text-amber-400">1 / 5</span>
+          </div>
+          <div class="text-center">
+            <span class="text-xs text-slate-400 block uppercase font-bold">Score</span>
+            <span id="r3Score" class="text-lg font-extrabold text-emerald-400">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question Box -->
+      <div class="bg-gradient-to-r from-amber-900/80 via-orange-900/80 to-slate-900/90 border-2 border-amber-400/50 rounded-2xl p-6 text-center shadow-xl">
+        <span class="text-xs font-extrabold text-amber-300 uppercase tracking-widest block mb-2">⚡ Question:</span>
+        <div id="r3QuestionDisplay" class="text-xl md:text-2xl font-extrabold font-heading text-amber-200">
+          <!-- Question inserted dynamically -->
+        </div>
+      </div>
+
+      <!-- Multiple Choice Options Container -->
+      <div class="bg-slate-800/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center gap-4 max-w-2xl mx-auto shadow-2xl">
+        <label class="block text-xs font-bold uppercase text-slate-300 tracking-wider mb-1">Choose the correct answer:</label>
+        
+        <div id="r3OptionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+          <!-- Option buttons inserted dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 6: GAME SUMMARY / RESULTS & MYSTERY GIFT BOXES -->
+    <section id="viewSummary" class="hidden max-w-xl mx-auto w-full bg-slate-800/90 border border-indigo-500/40 rounded-3xl p-6 md:p-8 text-center shadow-2xl backdrop-blur-xl space-y-6">
+      <div class="inline-block p-5 rounded-full bg-gradient-to-tr from-amber-400 to-pink-500 shadow-xl animate-bounce">
+        <span class="text-5xl">🏆</span>
+      </div>
+
+      <div>
+        <h2 class="text-3xl md:text-4xl font-extrabold text-white font-heading">Challenge Completed!</h2>
+        <p class="text-indigo-200 text-sm mt-1">Great job exploring English City World!</p>
+      </div>
+
+      <!-- Player Score Breakdown -->
+      <div class="bg-slate-900/80 border border-slate-700/80 rounded-2xl p-5 space-y-3">
+        <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+          <span class="text-slate-400">👤 Player:</span>
+          <span id="summaryPlayerName" class="font-bold text-white">Name (Class)</span>
+        </div>
+        <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+          <span class="text-slate-400">📁 Topic Folder:</span>
+          <span id="summaryFolderTopic" class="font-bold text-indigo-300">Topic</span>
+        </div>
+        <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+          <span class="text-slate-400">🎈 Round 1 (Bubble Pop):</span>
+          <span id="summaryR1Score" class="font-bold text-indigo-300">0 pts</span>
+        </div>
+        <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+          <span class="text-slate-400">🧩 Round 2 (Word Builder):</span>
+          <span id="summaryR2Score" class="font-bold text-pink-300">0 pts</span>
+        </div>
+        <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+          <span class="text-slate-400">🎯 Round 3 (Master Challenge):</span>
+          <span id="summaryR3Score" class="font-bold text-amber-300">0 pts</span>
+        </div>
+        <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+          <span class="text-slate-400">🏆 Personal Best Score:</span>
+          <span id="summaryHighScore" class="font-bold text-emerald-400">0 pts</span>
+        </div>
+        <div class="flex justify-between items-center text-base pt-1">
+          <span class="text-slate-300 font-bold">⭐ Total Score (Rounds 1-3):</span>
+          <span id="summaryTotalScore" class="text-3xl font-extrabold text-amber-400 font-heading">0 pts</span>
+        </div>
+      </div>
+
+      <!-- Secret Gift Boxes Section (Only shown if score is 100%) -->
+      <div id="fullScoreGiftSection" class="hidden bg-gradient-to-b from-indigo-900/80 to-purple-900/80 border-2 border-amber-400/60 rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-center gap-2 text-amber-300 font-extrabold text-lg font-heading">
+          <span>🌟</span>
+          <span>PERFECT SCORE BONUS!</span>
+          <span>🌟</span>
+        </div>
+        <p class="text-xs text-indigo-200">Select 1 secret mystery gift box to claim your reward!</p>
+
+        <!-- 5 Boxes Grid -->
+        <div id="giftBoxesGrid" class="grid grid-cols-5 gap-2 pt-2">
+          <!-- Rendered via JS -->
+        </div>
+
+        <div id="giftResultDisplay" class="hidden mt-3 p-3 bg-amber-400/20 border border-amber-400/50 rounded-xl text-amber-300 font-bold text-sm animate-pulse">
+          <!-- Revealed reward text -->
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <button onclick="replayGame()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition flex items-center justify-center gap-2">
+          <span>🔄</span> Play Again
+        </button>
+        <button onclick="backToIsland()" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+          <span>🏝️</span> Back to Island Folders
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: ADD / EDIT ISLAND (ADMIN) -->
+  <div id="modalIsland" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 id="modalIslandTitle" class="text-xl font-bold text-white font-heading">Add New Island</h3>
+      
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Island Name</label>
+        <input type="text" id="inputIslandName" placeholder="e.g. IELTS Island" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Icon / Emoji</label>
+        <input type="text" id="inputIslandIcon" placeholder="e.g. 🏝️ or ⛵ or 🌋" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Description</label>
+        <input type="text" id="inputIslandDesc" placeholder="e.g. Advanced Academic Vocabulary" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Access Password (Optional)</label>
+        <input type="password" id="inputIslandPassword" placeholder="Leave empty for public access" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeModal('modalIsland')" class="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl text-sm hover:bg-slate-600">Cancel</button>
+        <button onclick="saveIsland()" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-500">Save Island</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT FOLDER (ADMIN) -->
+  <div id="modalFolder" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 id="modalFolderTitle" class="text-xl font-bold text-white font-heading">Add New Folder</h3>
+      
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Folder Name</label>
+        <input type="text" id="inputFolderName" placeholder="e.g. Unit 1: My New School" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Access Password (Optional)</label>
+        <input type="password" id="inputFolderPassword" placeholder="Leave empty for public access" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeModal('modalFolder')" class="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl text-sm hover:bg-slate-600">Cancel</button>
+        <button onclick="saveFolder()" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-500">Save Folder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT WORD & BULK IMPORT (ADMIN) -->
+  <div id="modalWord" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 id="modalWordTitle" class="text-xl font-bold text-white font-heading">Add Vocabulary Word</h3>
+        <div class="flex bg-slate-900 p-1 rounded-xl">
+          <button id="tabSingleBtn" onclick="switchWordTab('single')" class="px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white">Single Word</button>
+          <button id="tabBulkBtn" onclick="switchWordTab('bulk')" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white">Bulk List (Enter)</button>
+        </div>
+      </div>
+      
+      <!-- Single Entry Tab -->
+      <div id="tabSingleContent" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-300 mb-1">English Word</label>
+          <input type="text" id="inputWordEnglish" placeholder="e.g. Teacher" onkeydown="handleWordInputEnter(event)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Vietnamese Meaning</label>
+          <input type="text" id="inputWordMeaning" placeholder="e.g. Giáo viên" onkeydown="handleWordInputEnter(event)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+        </div>
+      </div>
+
+      <!-- Bulk Import Tab -->
+      <div id="tabBulkContent" class="hidden space-y-2">
+        <label class="block text-xs font-bold uppercase text-slate-300">Paste List (1 word per line: English - Vietnamese)</label>
+        <textarea id="inputBulkWords" rows="6" placeholder="Classmate - Bạn cùng lớp&#10;Library - Thư viện&#10;Calculator: Máy tính" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs font-mono focus:outline-none focus:border-indigo-500"></textarea>
+        <p class="text-[11px] text-indigo-300">💡 Press Enter between lines. Supports hyphen (-), colon (:), or equal (=) separators.</p>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-slate-700/60">
+        <button onclick="closeModal('modalWord')" class="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl text-sm hover:bg-slate-600">Cancel</button>
+        <button onclick="saveWord()" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-500 flex items-center gap-1">
+          <span>💾</span> Save Word(s)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT ROUND 3 QUESTION (ADMIN ONLY) -->
+  <div id="modalR3Question" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <h3 id="modalR3Title" class="text-xl font-bold text-white font-heading">Add Round 3 Question</h3>
+      
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-300 mb-1">Question Text</label>
+        <input type="text" id="inputR3QuestionText" placeholder="e.g. Which place has thousands of books for students?" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500">
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase text-slate-300">Options (Select radio for correct answer)</label>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <input type="radio" name="r3CorrectOption" value="0" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
+            <input type="text" id="r3Opt0" placeholder="Option A (e.g. Library)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="radio" name="r3CorrectOption" value="1" class="w-4 h-4 accent-amber-500 cursor-pointer">
+            <input type="text" id="r3Opt1" placeholder="Option B (e.g. Canteen)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="radio" name="r3CorrectOption" value="2" class="w-4 h-4 accent-amber-500 cursor-pointer">
+            <input type="text" id="r3Opt2" placeholder="Option C (e.g. Gym)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="radio" name="r3CorrectOption" value="3" class="w-4 h-4 accent-amber-500 cursor-pointer">
+            <input type="text" id="r3Opt3" placeholder="Option D (e.g. Playground)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-slate-700/60">
+        <button onclick="closeModal('modalR3Question')" class="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl text-sm hover:bg-slate-600">Cancel</button>
+        <button onclick="saveR3Question()" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-xl text-sm flex items-center gap-1">
+          <span>💾</span> Save R3 Question
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ENTER PASSWORD PROMPT -->
+  <div id="modalPasswordPrompt" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center">
+      <div class="text-3xl">🔒</div>
+      <h3 id="promptModalTitle" class="text-xl font-bold text-white font-heading">Protected Item</h3>
+      <p id="promptModalDesc" class="text-xs text-slate-300">Enter password to gain access:</p>
+      
+      <input type="password" id="inputPromptPassword" placeholder="Enter Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-center focus:outline-none focus:border-indigo-500">
+
+      <div class="flex justify-center gap-3 pt-2">
+        <button onclick="closeModal('modalPasswordPrompt')" class="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl text-sm hover:bg-slate-600">Cancel</button>
+        <button onclick="submitPasswordPrompt()" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-500">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRMATION DIALOG -->
+  <div id="modalConfirm" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center">
+      <div class="text-3xl">⚠️</div>
+      <h3 id="confirmTitle" class="text-xl font-bold text-white font-heading">Are you sure?</h3>
+      <p id="confirmDesc" class="text-xs text-slate-300">This action cannot be undone.</p>
+
+      <div class="flex justify-center gap-3 pt-2">
+        <button onclick="closeModal('modalConfirm')" class="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl text-sm hover:bg-slate-600">Cancel</button>
+        <button id="confirmBtnAction" class="px-5 py-2 bg-rose-600 text-white font-bold rounded-xl text-sm hover:bg-rose-500">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'ENGLISH_CITY_WORLD_ISLANDS_V5';
+    const SCORES_KEY = 'ENGLISH_CITY_WORLD_SCORES_V5';
+
+    const defaultIslands = [
+      {
+        id: 'i_ket',
+        name: 'KET Island',
+        icon: '📘',
+        description: 'Cambridge Key English Test (Level A2)',
+        password: ''
+      },
+      {
+        id: 'i_pet',
+        name: 'PET Island',
+        icon: '📙',
+        description: 'Cambridge Preliminary English Test (Level B1)',
+        password: ''
+      },
+      {
+        id: 'i_my',
+        name: 'My Island',
+        icon: '🏰',
+        description: 'Custom Practice & School Topics',
+        password: ''
+      }
+    ];
+
+    const defaultFolders = [
+      {
+        id: 'f_school',
+        islandId: 'i_ket',
+        name: 'School & Stationery',
+        password: '',
+        words: [
+          { id: 'w1', word: 'Teacher', meaning: 'Giáo viên' },
+          { id: 'w2', word: 'Student', meaning: 'Học sinh' },
+          { id: 'w3', word: 'Library', meaning: 'Thư viện' },
+          { id: 'w4', word: 'Pencil', meaning: 'Bút chì' },
+          { id: 'w5', word: 'Book', meaning: 'Quyển sách' }
+        ],
+        round3Questions: [
+          {
+            id: 'r3_sample1',
+            question: 'Which place in school has thousands of books for quiet reading?',
+            options: ['Library', 'Canteen', 'Playground', 'Gym'],
+            correctIndex: 0
+          },
+          {
+            id: 'r3_sample2',
+            question: 'Who guides and teaches students in a classroom?',
+            options: ['Doctor', 'Teacher', 'Pilot', 'Chef'],
+            correctIndex: 1
+          }
+        ]
+      },
+      {
+        id: 'f_animals',
+        islandId: 'i_ket',
+        name: 'Animals World',
+        password: '',
+        words: [
+          { id: 'w6', word: 'Elephant', meaning: 'Con voi' },
+          { id: 'w7', word: 'Dolphin', meaning: 'Cá heo' },
+          { id: 'w8', word: 'Tiger', meaning: 'Con hổ' },
+          { id: 'w9', word: 'Monkey', meaning: 'Con khỉ' }
+        ],
+        round3Questions: []
+      },
+      {
+        id: 'f_travel',
+        islandId: 'i_pet',
+        name: 'Travel & Holiday',
+        password: '',
+        words: [
+          { id: 'w10', word: 'Luggage', meaning: 'Hành lý' },
+          { id: 'w11', word: 'Passport', meaning: 'Hộ chiếu' },
+          { id: 'w12', word: 'Airport', meaning: 'Sân bay' },
+          { id: 'w13', word: 'Journey', meaning: 'Chuyến đi' }
+        ],
+        round3Questions: []
+      },
+      {
+        id: 'f_hobbies',
+        islandId: 'i_my',
+        name: 'Hobbies & Sports',
+        password: '',
+        words: [
+          { id: 'w14', word: 'Painting', meaning: 'Vẽ tranh' },
+          { id: 'w15', word: 'Swimming', meaning: 'Bơi lội' },
+          { id: 'w16', word: 'Guitar', meaning: 'Đàn ghi-ta' }
+        ],
+        round3Questions: []
+      }
+    ];
+
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            this.ctx = new AudioContextClass();
+          }
+        }
+      }
+      playPop() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.1);
+        } catch(e){}
+      }
+      playWrong() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+          osc.frequency.setValueAtTime(150, this.ctx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.25);
+        } catch(e){}
+      }
+      playVictory() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.12 + 0.3);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + idx * 0.12);
+            osc.stop(this.ctx.currentTime + idx * 0.12 + 0.3);
+          });
+        } catch(e){}
+      }
+    }
+    const audioSynth = new SoundFX();
+
+    let currentUser = null; // { name, userClass, password, isAdmin, userKey }
+    let islands = [];
+    let folders = [];
+    
+    let currentIslandId = null;
+    let currentFolderId = null;
+
+    let targetUnlockItem = null;
+    let editingIslandId = null;
+    let editingFolderId = null;
+    let editingWordId = null;
+    let editingR3QuestionId = null;
+    let activeWordTab = 'single';
+
+    // Game Engine State
+    let gameWordList = [];
+    let gameR3Questions = [];
+    let currentGameIndex = 0;
+    let round1Score = 0;
+    let round2Score = 0;
+    let round3Score = 0;
+    let totalScore = 0;
+    let isProcessingAnswer = false;
+    
+    // Round 2 Unscramble State
+    let r2CurrentLettersPool = [];
+    let selectedR2Letters = [];
+
+    // Secret Gift Rewards
+    const REWARD_OPTIONS = ["Copy 1 line 📝", "Copy 2 lines 📝", "Good luck! 🍀", "Lucky star ⭐", "ChupaChups CJK/🍭"];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDataFromStorage();
+      showView('viewLogin');
+    });
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bg = type === 'error' ? 'bg-rose-600' : type === 'success' ? 'bg-emerald-600' : 'bg-indigo-600';
+      toast.className = `toast-enter ${bg} text-white font-bold px-5 py-2.5 rounded-2xl shadow-xl text-sm flex items-center gap-2 pointer-events-auto`;
+      toast.innerHTML = `<span>${type === 'error' ? '⚠️' : type === 'success' ? '✅' : 'ℹ️'}</span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    function loadDataFromStorage() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          islands = parsed.islands || defaultIslands;
+          folders = parsed.folders || defaultFolders;
+        } catch (e) {
+          islands = defaultIslands;
+          folders = defaultFolders;
+        }
+      } else {
+        islands = defaultIslands;
+        folders = defaultFolders;
+        saveDataToStorage();
+      }
+    }
+
+    function saveDataToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ islands, folders }));
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const r2View = document.getElementById('viewRound2');
+      if (r2View && !r2View.classList.contains('hidden')) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        if (e.key === 'Backspace') {
+          e.preventDefault();
+          if (selectedR2Letters.length > 0) {
+            removeR2LetterAt(selectedR2Letters.length - 1);
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          checkR2Answer();
+        } else if (/^[a-zA-Z]$/.test(e.key)) {
+          const keyUpper = e.key.toUpperCase();
+          if (!gameWordList[currentGameIndex]) return;
+          const targetWord = gameWordList[currentGameIndex].word;
+          
+          if (selectedR2Letters.length < targetWord.length) {
+            const unusedItem = r2CurrentLettersPool.find(item => !item.used && item.char === keyUpper);
+            if (unusedItem) {
+              selectR2PoolLetter(unusedItem.id);
+            }
+          }
+        }
+      }
+    });
+
+    function handleLogin(e) {
+      if (e) e.preventDefault();
+      const name = document.getElementById('inputName').value.trim();
+      const userClass = document.getElementById('inputClass').value.trim();
+      const password = document.getElementById('inputPassword').value.trim();
+
+      if (!name || !userClass || !password) {
+        showToast('Please fill in Name, Class, and Password!', 'error');
+        return;
+      }
+
+      // Admin check: Name = "Ms Trinh", Password = "Albee"
+      const isAdmin = (name.toLowerCase() === 'ms trinh' && password === 'Albee');
+
+      // Unique player key based on name and class
+      const userKey = `${name.toLowerCase().replace(/\s+/g, '')}_${userClass.toLowerCase().replace(/\s+/g, '')}`;
+
+      currentUser = { name, userClass, password, isAdmin, userKey };
+
+      // Update Header Badge
+      document.getElementById('badgeName').innerText = currentUser.name;
+      document.getElementById('badgeClass').innerText = `Class: ${currentUser.userClass}`;
+      document.getElementById('userBadge').classList.remove('hidden');
+
+      if (currentUser.isAdmin) {
+        document.getElementById('adminTag').classList.remove('hidden');
+        document.getElementById('adminAddIslandBtn').classList.remove('hidden');
+        document.getElementById('adminAddFolderBtn').classList.remove('hidden');
+        document.getElementById('adminAddWordBtn').classList.remove('hidden');
+      } else {
+        document.getElementById('adminTag').classList.add('hidden');
+        document.getElementById('adminAddIslandBtn').classList.add('hidden');
+        document.getElementById('adminAddFolderBtn').classList.add('hidden');
+        document.getElementById('adminAddWordBtn').classList.add('hidden');
+      }
+
+      renderIslandsHub();
+      showView('viewIslandsHub');
+    }
+
+    function savePlayerScore(folderId, score) {
+      if (!currentUser) return;
+      let scores = {};
+      try {
+        scores = JSON.parse(localStorage.getItem(SCORES_KEY) || '{}');
+      } catch (e) {
+        scores = {};
+      }
+      const playerKey = currentUser.userKey;
+      if (!scores[playerKey]) {
+        scores[playerKey] = { name: currentUser.name, userClass: currentUser.userClass, folderScores: {} };
+      }
+      const currentHigh = scores[playerKey].folderScores[folderId] || 0;
+      if (score > currentHigh) {
+        scores[playerKey].folderScores[folderId] = score;
+      }
+      localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+    }
+
+    function getPlayerHighScore(folderId) {
+      if (!currentUser) return 0;
+      try {
+        const scores = JSON.parse(localStorage.getItem(SCORES_KEY) || '{}');
+        const playerKey = currentUser.userKey;
+        return (scores[playerKey] && scores[playerKey].folderScores && scores[playerKey].folderScores[folderId]) || 0;
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('userBadge').classList.add('hidden');
+      document.getElementById('loginForm').reset();
+      showView('viewLogin');
+    }
+
+    function goHome() {
+      if (!currentUser) {
+        showView('viewLogin');
+        return;
+      }
+      renderIslandsHub();
+      showView('viewIslandsHub');
+    }
+
+    function showView(viewId) {
+      const views = ['viewLogin', 'viewIslandsHub', 'viewIslandDetail', 'viewFolderDetail', 'viewRound1', 'viewRound2', 'viewRound3', 'viewSummary'];
+      views.forEach(v => {
+        const el = document.getElementById(v);
+        if (v === viewId) {
+          el.classList.remove('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+    }
+
+    function renderIslandsHub() {
+      const grid = document.getElementById('islandsGrid');
+      grid.innerHTML = '';
+
+      islands.forEach(isl => {
+        const hasPassword = Boolean(isl.password && isl.password.trim() !== '');
+        const islandFolders = folders.filter(f => f.islandId === isl.id);
+        const folderCount = islandFolders.length;
+        let totalWordCount = 0;
+        islandFolders.forEach(f => {
+          if (f.words) totalWordCount += f.words.length;
+        });
+
+        const card = document.createElement('div');
+        card.className = 'bg-slate-800/80 border border-slate-700/80 hover:border-amber-400/60 rounded-3xl p-6 shadow-xl transition transform hover:-translate-y-1 flex flex-col justify-between relative group';
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-4xl bg-slate-900/80 p-3 rounded-2xl border border-slate-700">${escapeHtml(isl.icon || '🏝️')}</span>
+              <div class="flex items-center gap-1.5">
+                ${hasPassword ? `<span class="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs px-2.5 py-1 rounded-full font-bold">🔒 Pass</span>` : `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs px-2.5 py-1 rounded-full font-bold">Open</span>`}
+              </div>
+            </div>
+            <h3 class="text-2xl font-bold text-white font-heading">${escapeHtml(isl.name)}</h3>
+            <p class="text-xs text-indigo-200 mt-1">${escapeHtml(isl.description || 'Vocabulary Island')}</p>
+            <div class="mt-4 flex items-center gap-3 text-xs text-slate-300 font-semibold">
+              <span class="bg-slate-900/60 px-3 py-1 rounded-lg border border-slate-700/50">📁 ${folderCount} Folders</span>
+              <span class="bg-slate-900/60 px-3 py-1 rounded-lg border border-slate-700/50">📚 ${totalWordCount} Words</span>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between gap-2 border-t border-slate-700/60 pt-4">
+            <button onclick="enterIsland('${isl.id}')" class="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold rounded-xl text-sm shadow transition flex items-center justify-center gap-1.5">
+              <span>Explore Island</span>
+              <span>➔</span>
+            </button>
+            ${currentUser && currentUser.isAdmin ? `
+              <button onclick="openEditIslandModal('${isl.id}')" title="Edit Island" class="p-3 bg-slate-700 hover:bg-slate-600 rounded-xl text-slate-200 text-xs">✏️</button>
+              <button onclick="promptDeleteIsland('${isl.id}')" title="Delete Island" class="p-3 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 rounded-xl text-xs transition">🗑️</button>
+            ` : ''}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function enterIsland(islandId) {
+      const island = islands.find(i => i.id === islandId);
+      if (!island) return;
+
+      if (!currentUser.isAdmin && island.password && island.password.trim() !== '') {
+        targetUnlockItem = { type: 'island', item: island };
+        document.getElementById('promptModalTitle').innerText = 'Protected Island';
+        document.getElementById('promptModalDesc').innerText = 'Enter password to unlock this island:';
+        document.getElementById('inputPromptPassword').value = '';
+        openModal('modalPasswordPrompt');
+        return;
+      }
+
+      openIslandDetail(island);
+    }
+
+    function openIslandDetail(island) {
+      currentIslandId = island.id;
+      document.getElementById('islandDetailTitle').innerText = island.name;
+      document.getElementById('islandDetailIcon').innerText = island.icon || '🏝️';
+      document.getElementById('islandDetailDesc').innerText = island.description || 'Vocabulary Topic Folders';
+
+      if (island.password) {
+        document.getElementById('islandDetailLock').classList.remove('hidden');
+      } else {
+        document.getElementById('islandDetailLock').classList.add('hidden');
+      }
+
+      renderIslandFolders();
+      showView('viewIslandDetail');
+    }
+
+    function renderIslandFolders() {
+      const grid = document.getElementById('folderGrid');
+      grid.innerHTML = '';
+
+      const islandFolders = folders.filter(f => f.islandId === currentIslandId);
+
+      if (islandFolders.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 bg-slate-800/40 rounded-3xl border border-slate-700/60 p-6">
+            <span class="text-4xl block mb-2">📁</span>
+            <p class="text-slate-300 text-sm font-semibold">No vocabulary folders on this island yet.</p>
+            ${currentUser && currentUser.isAdmin ? '<p class="text-indigo-300 text-xs mt-1">Click "+ Add Folder to Island" above to create one!</p>' : ''}
+          </div>
+        `;
+        return;
+      }
+
+      islandFolders.forEach(f => {
+        const hasPassword = Boolean(f.password && f.password.trim() !== '');
+        const totalWords = f.words ? f.words.length : 0;
+        const savedScore = getPlayerHighScore(f.id);
+
+        const card = document.createElement('div');
+        card.className = 'bg-slate-800/80 border border-slate-700/80 hover:border-indigo-500/50 rounded-3xl p-5 shadow-xl transition transform hover:-translate-y-1 flex flex-col justify-between relative group';
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-3xl">📂</span>
+              <div class="flex items-center gap-1.5">
+                ${savedScore > 0 ? `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs px-2.5 py-1 rounded-full font-bold flex items-center gap-1">⭐ Best: ${savedScore}</span>` : ''}
+                ${hasPassword ? `<span class="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs px-2.5 py-1 rounded-full font-bold flex items-center gap-1">🔒 Pass</span>` : `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs px-2.5 py-1 rounded-full font-bold">Open</span>`}
+              </div>
+            </div>
+            <h3 class="text-xl font-bold text-white font-heading">${escapeHtml(f.name)}</h3>
+            <p class="text-xs text-indigo-300 font-semibold mt-1">📚 ${totalWords} vocabulary words</p>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between gap-2 border-t border-slate-700/60 pt-4">
+            <button onclick="enterFolder('${f.id}')" class="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold rounded-xl text-sm shadow transition flex items-center justify-center gap-1">
+              <span>Open Folder</span>
+              <span>➔</span>
+            </button>
+            ${currentUser && currentUser.isAdmin ? `
+              <button onclick="openEditFolderModal('${f.id}')" title="Edit Folder" class="p-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-slate-200 text-xs">✏️</button>
+              <button onclick="promptDeleteFolder('${f.id}')" title="Delete Folder" class="p-2.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 rounded-xl text-xs transition">🗑️</button>
+            ` : ''}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function enterFolder(folderId) {
+      const folder = folders.find(f => f.id === folderId);
+      if (!folder) return;
+
+      if (!currentUser.isAdmin && folder.password && folder.password.trim() !== '') {
+        targetUnlockItem = { type: 'folder', item: folder };
+        document.getElementById('promptModalTitle').innerText = 'Protected Folder';
+        document.getElementById('promptModalDesc').innerText = 'Enter password to unlock this folder:';
+        document.getElementById('inputPromptPassword').value = '';
+        openModal('modalPasswordPrompt');
+        return;
+      }
+
+      openFolderDetail(folder);
+    }
+
+    function submitPasswordPrompt() {
+      const inputPass = document.getElementById('inputPromptPassword').value;
+      if (!targetUnlockItem) return;
+
+      if (inputPass === targetUnlockItem.item.password) {
+        closeModal('modalPasswordPrompt');
+        if (targetUnlockItem.type === 'island') {
+          openIslandDetail(targetUnlockItem.item);
+        } else if (targetUnlockItem.type === 'folder') {
+          openFolderDetail(targetUnlockItem.item);
+        }
+      } else {
+        audioSynth.playWrong();
+        showToast('Incorrect password!', 'error');
+      }
+    }
+
+    function openFolderDetail(folder) {
+      currentFolderId = folder.id;
+      document.getElementById('detailFolderName').innerText = folder.name;
+      document.getElementById('detailWordCount').innerText = `${folder.words ? folder.words.length : 0} Words Available`;
+
+      if (folder.password) {
+        document.getElementById('detailLockBadge').classList.remove('hidden');
+      } else {
+        document.getElementById('detailLockBadge').classList.add('hidden');
+      }
+
+      renderVocabList(folder);
+
+      // ONLY DISPLAY ROUND 3 QUESTION LIST FOR ADMIN. Regular students won't see it!
+      const adminR3Sec = document.getElementById('adminRound3Section');
+      if (currentUser && currentUser.isAdmin) {
+        adminR3Sec.classList.remove('hidden');
+        renderAdminR3Questions(folder);
+      } else {
+        adminR3Sec.classList.add('hidden');
+      }
+
+      showView('viewFolderDetail');
+    }
+
+    function backToIsland() {
+      if (currentIslandId) {
+        const island = islands.find(i => i.id === currentIslandId);
+        if (island) {
+          openIslandDetail(island);
+          return;
+        }
+      }
+      goHome();
+    }
+
+    function renderVocabList(folder) {
+      const list = document.getElementById('vocabList');
+      list.innerHTML = '';
+
+      if (!folder.words || folder.words.length === 0) {
+        list.innerHTML = `
+          <div class="col-span-full text-center py-8 text-slate-400 text-sm">
+            No vocabulary items in this folder yet. ${currentUser && currentUser.isAdmin ? 'Click "Add Word" above to start adding!' : ''}
+          </div>
+        `;
+        return;
+      }
+
+      folder.words.forEach(w => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-900/80 border border-slate-700/80 p-4 rounded-2xl flex items-center justify-between gap-3 shadow';
+        item.innerHTML = `
+          <div>
+            <div class="text-base font-extrabold text-amber-300 font-heading">${escapeHtml(w.word)}</div>
+            <div class="text-xs text-slate-300 mt-0.5">Meaning: <span class="font-bold text-white">${escapeHtml(w.meaning)}</span></div>
+          </div>
+          ${currentUser && currentUser.isAdmin ? `
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="openEditWordModal('${w.id}')" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-200">✏️</button>
+              <button onclick="promptDeleteWord('${w.id}')" class="p-2 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-lg text-xs">🗑️</button>
+            </div>
+          ` : ''}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function renderAdminR3Questions(folder) {
+      const container = document.getElementById('adminR3QuestionList');
+      container.innerHTML = '';
+
+      const r3List = folder.round3Questions || [];
+
+      if (r3List.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-slate-400 text-xs bg-slate-900/50 rounded-2xl border border-slate-700/50 p-4">
+            No custom Round 3 questions added yet. (If empty, game will auto-generate multiple-choice questions from vocabulary list).
+          </div>
+        `;
+        return;
+      }
+
+      r3List.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-900/90 border border-slate-700 p-4 rounded-2xl space-y-2';
+
+        const optionsBadges = q.options.map((opt, oIdx) => {
+          const isCorrect = (oIdx === q.correctIndex);
+          return `<span class="inline-block px-2.5 py-1 rounded-lg text-xs font-bold ${isCorrect ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
+            ${isCorrect ? '✓ ' : ''}${escapeHtml(opt)}
+          </span>`;
+        }).join(' ');
+
+        item.innerHTML = `
+          <div class="flex justify-between items-start gap-3">
+            <div>
+              <span class="text-xs font-bold text-amber-400 uppercase">Q${idx + 1}:</span>
+              <p class="text-sm font-bold text-white mt-0.5">${escapeHtml(q.question)}</p>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="openEditR3QuestionModal('${q.id}')" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-200">✏️</button>
+              <button onclick="promptDeleteR3Question('${q.id}')" class="p-2 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-lg text-xs">🗑️</button>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 pt-1">
+            ${optionsBadges}
+          </div>
+        `;
+
+        container.appendChild(item);
+      });
+    }
+
+    function openAddR3QuestionModal() {
+      editingR3QuestionId = null;
+      document.getElementById('modalR3Title').innerText = 'Add Round 3 Question';
+      document.getElementById('inputR3QuestionText').value = '';
+      document.getElementById('r3Opt0').value = '';
+      document.getElementById('r3Opt1').value = '';
+      document.getElementById('r3Opt2').value = '';
+      document.getElementById('r3Opt3').value = '';
+      
+      const radios = document.getElementsByName('r3CorrectOption');
+      if (radios.length > 0) radios[0].checked = true;
+
+      openModal('modalR3Question');
+    }
+
+    function openEditR3QuestionModal(qId) {
+      const folder = folders.find(f => f.id === currentFolderId);
+      if (!folder || !folder.round3Questions) return;
+      const q = folder.round3Questions.find(item => item.id === qId);
+      if (!q) return;
+
+      editingR3QuestionId = qId;
+      document.getElementById('modalR3Title').innerText = 'Edit Round 3 Question';
+      document.getElementById('inputR3QuestionText').value = q.question;
+      document.getElementById('r3Opt0').value = q.options[0] || '';
+      document.getElementById('r3Opt1').value = q.options[1] || '';
+      document.getElementById('r3Opt2').value = q.options[2] || '';
+      document.getElementById('r3Opt3').value = q.options[3] || '';
+
+      const radios = document.getElementsByName('r3CorrectOption');
+      const correctIdx = q.correctIndex || 0;
+      if (radios[correctIdx]) radios[correctIdx].checked = true;
+
+      openModal('modalR3Question');
+    }
+
+    function saveR3Question() {
+      const folder = folders.find(f => f.id === currentFolderId);
+      if (!folder) return;
+
+      if (!folder.round3Questions) folder.round3Questions = [];
+
+      const qText = document.getElementById('inputR3QuestionText').value.trim();
+      const opt0 = document.getElementById('r3Opt0').value.trim();
+      const opt1 = document.getElementById('r3Opt1').value.trim();
+      const opt2 = document.getElementById('r3Opt2').value.trim();
+      const opt3 = document.getElementById('r3Opt3').value.trim();
+
+      if (!qText || !opt0 || !opt1) {
+        showToast('Please enter Question text and at least 2 options!', 'error');
+        return;
+      }
+
+      const options = [opt0, opt1];
+      if (opt2) options.push(opt2);
+      if (opt3) options.push(opt3);
+
+      const radios = document.getElementsByName('r3CorrectOption');
+      let selectedRadioVal = 0;
+      for (let r of radios) {
+        if (r.checked) {
+          selectedRadioVal = parseInt(r.value);
+          break;
+        }
+      }
+
+      if (selectedRadioVal >= options.length) {
+        selectedRadioVal = 0;
+      }
+
+      if (editingR3QuestionId) {
+        const item = folder.round3Questions.find(q => q.id === editingR3QuestionId);
+        if (item) {
+          item.question = qText;
+          item.options = options;
+          item.correctIndex = selectedRadioVal;
+        }
+      } else {
+        folder.round3Questions.push({
+          id: 'r3_' + Date.now(),
+          question: qText,
+          options: options,
+          correctIndex: selectedRadioVal
+        });
+      }
+
+      saveDataToStorage();
+      closeModal('modalR3Question');
+      renderAdminR3Questions(folder);
+      showToast('Round 3 Question saved!', 'success');
+    }
+
+    function promptDeleteR3Question(qId) {
+      const folder = folders.find(f => f.id === currentFolderId);
+      if (!folder || !folder.round3Questions) return;
+
+      document.getElementById('confirmTitle').innerText = 'Delete R3 Question?';
+      document.getElementById('confirmDesc').innerText = 'Are you sure you want to remove this Round 3 question?';
+      
+      const btn = document.getElementById('confirmBtnAction');
+      btn.onclick = () => {
+        folder.round3Questions = folder.round3Questions.filter(q => q.id !== qId);
+        saveDataToStorage();
+        closeModal('modalConfirm');
+        renderAdminR3Questions(folder);
+        showToast('Question removed!', 'success');
+      };
+      openModal('modalConfirm');
+    }
+
+    function openAddIslandModal() {
+      editingIslandId = null;
+      document.getElementById('modalIslandTitle').innerText = 'Add New Island';
+      document.getElementById('inputIslandName').value = '';
+      document.getElementById('inputIslandIcon').value = '🏝️';
+      document.getElementById('inputIslandDesc').value = '';
+      document.getElementById('inputIslandPassword').value = '';
+      openModal('modalIsland');
+    }
+
+    function openEditIslandModal(islandId) {
+      const island = islands.find(i => i.id === islandId);
+      if (!island) return;
+      editingIslandId = islandId;
+      document.getElementById('modalIslandTitle').innerText = 'Edit Island';
+      document.getElementById('inputIslandName').value = island.name;
+      document.getElementById('inputIslandIcon').value = island.icon || '🏝️';
+      document.getElementById('inputIslandDesc').value = island.description || '';
+      document.getElementById('inputIslandPassword').value = island.password || '';
+      openModal('modalIsland');
+    }
+
+    function saveIsland() {
+      const name = document.getElementById('inputIslandName').value.trim();
+      const icon = document.getElementById('inputIslandIcon').value.trim() || '🏝️';
+      const desc = document.getElementById('inputIslandDesc').value.trim();
+      const password = document.getElementById('inputIslandPassword').value.trim();
+
+      if (!name) {
+        showToast('Please enter an Island Name!', 'error');
+        return;
+      }
+
+      if (editingIslandId) {
+        const island = islands.find(i => i.id === editingIslandId);
+        if (island) {
+          island.name = name;
+          island.icon = icon;
+          island.description = desc;
+          island.password = password;
+        }
+      } else {
+        const newIsland = {
+          id: 'i_' + Date.now(),
+          name: name,
+          icon: icon,
+          description: desc,
+          password: password
+        };
+        islands.push(newIsland);
+      }
+
+      saveDataToStorage();
+      closeModal('modalIsland');
+      renderIslandsHub();
+      showToast('Island saved successfully!', 'success');
+    }
+
+    function promptDeleteIsland(islandId) {
+      const island = islands.find(i => i.id === islandId);
+      if (!island) return;
+
+      document.getElementById('confirmTitle').innerText = 'Delete Island?';
+      document.getElementById('confirmDesc').innerText = `Are you sure you want to delete "${island.name}" and all its folders?`;
+      
+      const btn = document.getElementById('confirmBtnAction');
+      btn.onclick = () => {
+        islands = islands.filter(i => i.id !== islandId);
+        folders = folders.filter(f => f.islandId !== islandId);
+        saveDataToStorage();
+        closeModal('modalConfirm');
+        renderIslandsHub();
+        showToast('Island deleted!', 'success');
+      };
+      openModal('modalConfirm');
+    }
+
+    function openAddFolderModal() {
+      editingFolderId = null;
+      document.getElementById('modalFolderTitle').innerText = 'Add New Folder';
+      document.getElementById('inputFolderName').value = '';
+      document.getElementById('inputFolderPassword').value = '';
+      openModal('modalFolder');
+    }
+
+    function openEditFolderModal(folderId) {
+      const folder = folders.find(f => f.id === folderId);
+      if (!folder) return;
+      editingFolderId = folderId;
+      document.getElementById('modalFolderTitle').innerText = 'Edit Folder';
+      document.getElementById('inputFolderName').value = folder.name;
+      document.getElementById('inputFolderPassword').value = folder.password || '';
+      openModal('modalFolder');
+    }
+
+    function saveFolder() {
+      const name = document.getElementById('inputFolderName').value.trim();
+      const password = document.getElementById('inputFolderPassword').value.trim();
+
+      if (!name) {
+        showToast('Please enter a Folder Name!', 'error');
+        return;
+      }
+
+      if (editingFolderId) {
+        const folder = folders.find(f => f.id === editingFolderId);
+        if (folder) {
+          folder.name = name;
+          folder.password = password;
+        }
+      } else {
+        const newFolder = {
+          id: 'f_' + Date.now(),
+          islandId: currentIslandId,
+          name: name,
+          password: password,
+          words: [],
+          round3Questions: []
+        };
+        folders.push(newFolder);
+      }
+
+      saveDataToStorage();
+      closeModal('modalFolder');
+      renderIslandFolders();
+      showToast('Folder saved successfully!', 'success');
+    }
+
+    function promptDeleteFolder(folderId) {
+      const folder = folders.find(f => f.id === folderId);
+      if (!folder) return;
+
+      document.getElementById('confirmTitle').innerText = 'Delete Folder?';
+      document.getElementById('confirmDesc').innerText = `Are you sure you want to delete "${folder.name}"?`;
+      
+      const btn = document.getElementById('confirmBtnAction');
+      btn.onclick = () => {
+        folders = folders.filter(f => f.id !== folderId);
+        saveDataToStorage();
+        closeModal('modalConfirm');
+        renderIslandFolders();
+        showToast('Folder deleted!', 'success');
+      };
+      openModal('modalConfirm');
+    }
+
+    function switchWordTab(tab) {
+      activeWordTab = tab;
+      if (tab === 'single') {
+        document.getElementById('tabSingleBtn').className = 'px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white';
+        document.getElementById('tabBulkBtn').className = 'px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white';
+        document.getElementById('tabSingleContent').classList.remove('hidden');
+        document.getElementById('tabBulkContent').classList.add('hidden');
+      } else {
+        document.getElementById('tabSingleBtn').className = 'px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white';
+        document.getElementById('tabBulkBtn').className = 'px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white';
+        document.getElementById('tabSingleContent').classList.add('hidden');
+        document.getElementById('tabBulkContent').classList.remove('hidden');
+      }
+    }
+
+    function handleWordInputEnter(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveWord();
+      }
+    }
+
+    function openAddWordModal() {
+      editingWordId = null;
+      document.getElementById('modalWordTitle').innerText = 'Add Vocabulary Word';
+      document.getElementById('inputWordEnglish').value = '';
+      document.getElementById('inputWordMeaning').value = '';
+      document.getElementById('inputBulkWords').value = '';
+      switchWordTab('single');
+      openModal('modalWord');
+    }
+
+    function openEditWordModal(wordId) {
+      const folder = folders.find(f => f.id === currentFolderId);
+      if (!folder) return;
+      const word = folder.words.find(w => w.id === wordId);
+      if (!word) return;
+
+      editingWordId = wordId;
+      document.getElementById('modalWordTitle').innerText = 'Edit Word';
+      document.getElementById('inputWordEnglish').value = word.word;
+      document.getElementById('inputWordMeaning').value = word.meaning;
+      switchWordTab('single');
+      openModal('modalWord');
+    }
+
+    function saveWord() {
+      const folder = folders.find(f => f.id === currentFolderId);
+      if (!folder) return;
+
+      if (activeWordTab === 'single') {
+        const eng = document.getElementById('inputWordEnglish').value.trim();
+        const mean = document.getElementById('inputWordMeaning').value.trim();
+        if (!eng || !mean) {
+          showToast('Please enter both English Word and Meaning!', 'error');
+          return;
+        }
+
+        if (editingWordId) {
+          const word = folder.words.find(w => w.id === editingWordId);
+          if (word) {
+            word.word = eng;
+            word.meaning = mean;
+          }
+        } else {
+          folder.words.push({
+            id: 'w_' + Date.now(),
+            word: eng,
+            meaning: mean
+          });
+        }
+      } else {
+        const text = document.getElementById('inputBulkWords').value.trim();
+        if (!text) {
+          showToast('Please paste a list of words!', 'error');
+          return;
+        }
+
+        const lines = text.split('\n');
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+
+          const parts = trimmed.split(/[-:=]/);
+          if (parts.length >= 2) {
+            const word = parts[0].trim();
+            const meaning = parts.slice(1).join('-').trim();
+            if (word && meaning) {
+              folder.words.push({
+                id: 'w_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                word: word,
+                meaning: meaning
+              });
+            }
+          }
+        });
+      }
+
+      saveDataToStorage();
+      closeModal('modalWord');
+      openFolderDetail(folder);
+      showToast('Vocabulary saved!', 'success');
+    }
+
+    function promptDeleteWord(wordId) {
+      const folder = folders.find(f => f.id === currentFolderId);
+      if (!folder) return;
+
+      document.getElementById('confirmTitle').innerText = 'Delete Word?';
+      document.getElementById('confirmDesc').innerText = 'Are you sure you want to remove this vocabulary item?';
+      
+      const btn = document.getElementById('confirmBtnAction');
+      btn.onclick = () => {
+        folder.words = folder.words.filter(w => w.id !== wordId);
+        saveDataToStorage();
+        closeModal('modalConfirm');
+        openFolderDetail(folder);
+        showToast('Word removed!', 'success');
+      };
+      openModal('modalConfirm');
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function startGame() {
+      const folder = folders.find(f => f.id === currentFolderId);
+      if (!folder || !folder.words || folder.words.length === 0) {
+        showToast('Please add at least 1 vocabulary word to play!', 'error');
+        return;
+      }
+
+      gameWordList = [...folder.words].sort(() => Math.random() - 0.5);
+
+      // Prepare Round 3 Questions: Use Admin questions if available, else auto-generate from vocab
+      if (folder.round3Questions && folder.round3Questions.length > 0) {
+        gameR3Questions = [...folder.round3Questions].sort(() => Math.random() - 0.5);
+      } else {
+        // Fallback auto-generated multiple choice from vocabulary words
+        gameR3Questions = gameWordList.map(item => {
+          const distractors = folder.words
+            .filter(w => w.id !== item.id)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3)
+            .map(w => w.word);
+
+          let options = [item.word, ...distractors].sort(() => Math.random() - 0.5);
+          let correctIdx = options.indexOf(item.word);
+
+          return {
+            id: 'auto_' + item.id,
+            question: `What is the English word for "${item.meaning}"?`,
+            options: options,
+            correctIndex: correctIdx
+          };
+        });
+      }
+
+      currentGameIndex = 0;
+      round1Score = 0;
+      round2Score = 0;
+      round3Score = 0;
+      totalScore = 0;
+
+      startRound1();
+    }
+
+    // --- ROUND 1: BUBBLE POP GAME ---
+    function startRound1() {
+      if (currentGameIndex >= gameWordList.length) {
+        currentGameIndex = 0;
+        startRound2();
+        return;
+      }
+
+      isProcessingAnswer = false;
+      const targetWord = gameWordList[currentGameIndex];
+
+      document.getElementById('r1Progress').innerText = `${currentGameIndex + 1} / ${gameWordList.length}`;
+      document.getElementById('r1Score').innerText = round1Score;
+      document.getElementById('r1TargetMeaning').innerText = `"${targetWord.meaning}"`;
+
+      const folder = folders.find(f => f.id === currentFolderId);
+      let distractorPool = folder.words.filter(w => w.id !== targetWord.id);
+      distractorPool = distractorPool.sort(() => Math.random() - 0.5).slice(0, 3);
+
+      let bubbleOptions = [targetWord, ...distractorPool];
+      bubbleOptions = bubbleOptions.sort(() => Math.random() - 0.5);
+
+      renderBubbles(bubbleOptions, targetWord.word);
+      showView('viewRound1');
+    }
+
+    function renderBubbles(options, targetWordStr) {
+      const stage = document.getElementById('bubbleStage');
+      stage.innerHTML = '';
+
+      const positions = [
+        { top: '12%', left: '15%' },
+        { top: '18%', left: '60%' },
+        { top: '55%', left: '22%' },
+        { top: '58%', left: '65%' }
+      ];
+
+      const gradients = [
+        'from-pink-500 to-rose-600',
+        'from-indigo-500 to-purple-600',
+        'from-cyan-500 to-blue-600',
+        'from-amber-400 to-orange-500',
+        'from-emerald-400 to-teal-600'
+      ];
+
+      options.forEach((opt, idx) => {
+        const bubble = document.createElement('div');
+        const pos = positions[idx % positions.length];
+        const grad = gradients[idx % gradients.length];
+
+        bubble.className = `bubble bg-gradient-to-tr ${grad} text-white text-base sm:text-xl font-extrabold w-28 h-28 sm:w-36 sm:h-36 px-2`;
+        bubble.style.top = pos.top;
+        bubble.style.left = pos.left;
+        bubble.style.animationDelay = `${idx * 0.4}s`;
+        bubble.innerText = opt.word;
+
+        bubble.onclick = () => handleBubbleClick(opt.word, targetWordStr, bubble);
+        stage.appendChild(bubble);
+      });
+    }
+
+    function handleBubbleClick(clickedWord, correctWord, bubbleEl) {
+      if (isProcessingAnswer) return;
+      isProcessingAnswer = true;
+
+      if (clickedWord.toLowerCase() === correctWord.toLowerCase()) {
+        audioSynth.playPop();
+        round1Score += 10;
+
+        bubbleEl.style.transform = 'scale(1.4)';
+        bubbleEl.style.opacity = '0';
+
+        setTimeout(() => {
+          currentGameIndex++;
+          startRound1();
+        }, 300);
+      } else {
+        audioSynth.playWrong();
+        bubbleEl.classList.add('shake-anim');
+
+        setTimeout(() => {
+          currentGameIndex++;
+          startRound1();
+        }, 600);
+      }
+    }
+
+    function startRound2() {
+      if (currentGameIndex >= gameWordList.length) {
+        currentGameIndex = 0;
+        startRound3();
+        return;
+      }
+
+      isProcessingAnswer = false;
+      const targetWord = gameWordList[currentGameIndex];
+
+      document.getElementById('r2Progress').innerText = `${currentGameIndex + 1} / ${gameWordList.length}`;
+      document.getElementById('r2Score').innerText = round2Score;
+      document.getElementById('r2TargetMeaning').innerText = `"${targetWord.meaning}"`;
+
+      selectedR2Letters = [];
+      
+      r2CurrentLettersPool = targetWord.word.toUpperCase().split('').map((char, idx) => ({
+        id: idx,
+        char: char,
+        used: false
+      })).sort(() => Math.random() - 0.5);
+
+      renderR2Slots(targetWord.word.length);
+      renderR2LetterPool();
+
+      showView('viewRound2');
+    }
+
+    function renderR2Slots(targetLength) {
+      const slotContainer = document.getElementById('r2AnswerSlots');
+      slotContainer.innerHTML = '';
+
+      for (let i = 0; i < targetLength; i++) {
+        const slot = document.createElement('div');
+
+        if (selectedR2Letters[i]) {
+          slot.className = 'bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-900 font-extrabold text-2xl w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shadow-lg cursor-pointer letter-tile border-2 border-amber-200';
+          slot.innerText = selectedR2Letters[i].char;
+          slot.onclick = () => removeR2LetterAt(i);
+        } else {
+          slot.className = 'bg-slate-800/80 border-2 border-dashed border-slate-600 text-slate-500 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center font-bold text-xl';
+          slot.innerText = '_';
+        }
+
+        slotContainer.appendChild(slot);
+      }
+    }
+
+    function renderR2LetterPool() {
+      const poolContainer = document.getElementById('r2LetterPool');
+      poolContainer.innerHTML = '';
+
+      r2CurrentLettersPool.forEach(item => {
+        const btn = document.createElement('button');
+        
+        if (item.used) {
+          btn.className = 'bg-slate-800 text-slate-600 font-bold text-xl w-12 h-12 sm:w-14 sm:h-14 rounded-2xl opacity-30 cursor-not-allowed pointer-events-none scale-90 border border-slate-700';
+        } else {
+          btn.className = 'bg-slate-700 hover:bg-indigo-600 text-white font-extrabold text-xl sm:text-2xl w-12 h-12 sm:w-14 sm:h-14 rounded-2xl shadow-md cursor-pointer transition transform hover:-translate-y-1 letter-tile border border-slate-600';
+        }
+        
+        btn.innerText = item.char;
+        btn.onclick = () => selectR2PoolLetter(item.id);
+        poolContainer.appendChild(btn);
+      });
+    }
+
+    function selectR2PoolLetter(poolId) {
+      const poolItem = r2CurrentLettersPool.find(item => item.id === poolId);
+      const targetWord = gameWordList[currentGameIndex].word;
+
+      if (poolItem && !poolItem.used && selectedR2Letters.length < targetWord.length) {
+        poolItem.used = true;
+        selectedR2Letters.push({ poolId: poolItem.id, char: poolItem.char });
+
+        renderR2Slots(targetWord.length);
+        renderR2LetterPool();
+      }
+    }
+
+    function removeR2LetterAt(index) {
+      if (index >= 0 && index < selectedR2Letters.length) {
+        const removed = selectedR2Letters.splice(index, 1)[0];
+        const poolItem = r2CurrentLettersPool.find(item => item.id === removed.poolId);
+        if (poolItem) {
+          poolItem.used = false;
+        }
+
+        const targetWord = gameWordList[currentGameIndex].word;
+        renderR2Slots(targetWord.length);
+        renderR2LetterPool();
+      }
+    }
+
+    function clearR2Answer() {
+      selectedR2Letters = [];
+      r2CurrentLettersPool.forEach(item => item.used = false);
+
+      const targetWord = gameWordList[currentGameIndex].word;
+      renderR2Slots(targetWord.length);
+      renderR2LetterPool();
+    }
+
+    function checkR2Answer() {
+      if (isProcessingAnswer) return;
+      isProcessingAnswer = true;
+
+      const targetWord = gameWordList[currentGameIndex].word;
+      const formedWord = selectedR2Letters.map(l => l.char).join('');
+
+      if (formedWord.toLowerCase() === targetWord.toLowerCase()) {
+        audioSynth.playPop();
+        round2Score += 15;
+        currentGameIndex++;
+        startRound2();
+      } else {
+        audioSynth.playWrong();
+        const slotContainer = document.getElementById('r2AnswerSlots');
+        slotContainer.classList.add('shake-anim');
+
+        setTimeout(() => {
+          currentGameIndex++;
+          startRound2();
+        }, 600);
+      }
+    }
+
+    function startRound3() {
+      if (currentGameIndex >= gameR3Questions.length) {
+        showSummary();
+        return;
+      }
+
+      isProcessingAnswer = false;
+      const currentQ = gameR3Questions[currentGameIndex];
+
+      document.getElementById('r3Progress').innerText = `${currentGameIndex + 1} / ${gameR3Questions.length}`;
+      document.getElementById('r3Score').innerText = round3Score;
+
+      document.getElementById('r3QuestionDisplay').innerText = currentQ.question;
+
+      const optionsGrid = document.getElementById('r3OptionsGrid');
+      optionsGrid.innerHTML = '';
+
+      currentQ.options.forEach((optText, oIdx) => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full py-4 px-5 bg-slate-900/90 hover:bg-indigo-600 border-2 border-indigo-500/40 hover:border-indigo-400 text-white font-extrabold text-base md:text-lg rounded-2xl shadow-md transition transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-start gap-3';
+        btn.innerHTML = `
+          <span class="w-8 h-8 rounded-xl bg-indigo-500/30 border border-indigo-400/50 flex items-center justify-center text-xs text-amber-300 font-bold shrink-0">
+            ${String.fromCharCode(65 + oIdx)}
+          </span>
+          <span class="text-left">${escapeHtml(optText)}</span>
+        `;
+
+        btn.onclick = () => handleR3OptionClick(oIdx, currentQ.correctIndex, btn);
+        optionsGrid.appendChild(btn);
+      });
+
+      showView('viewRound3');
+    }
+
+    function handleR3OptionClick(selectedIndex, correctIndex, btnEl) {
+      if (isProcessingAnswer) return;
+      isProcessingAnswer = true;
+
+      const allBtns = document.querySelectorAll('#r3OptionsGrid button');
+      allBtns.forEach(b => b.classList.add('pointer-events-none', 'opacity-60'));
+
+      btnEl.classList.remove('opacity-60');
+
+      if (selectedIndex === correctIndex) {
+        audioSynth.playPop();
+        round3Score += 20;
+        btnEl.classList.add('bg-emerald-600', 'border-emerald-400', 'ring-4', 'ring-emerald-400/40');
+        showToast('Correct! +20 points', 'success');
+
+        setTimeout(() => {
+          currentGameIndex++;
+          startRound3();
+        }, 700);
+      } else {
+        audioSynth.playWrong();
+        btnEl.classList.add('bg-rose-600', 'border-rose-400', 'shake-anim');
+
+        // Highlight correct answer
+        if (allBtns[correctIndex]) {
+          allBtns[correctIndex].classList.remove('opacity-60');
+          allBtns[correctIndex].classList.add('bg-emerald-600', 'border-emerald-400');
+        }
+
+        showToast('Incorrect option!', 'error');
+
+        setTimeout(() => {
+          currentGameIndex++;
+          startRound3();
+        }, 1200);
+      }
+    }
+
+    function showSummary() {
+      audioSynth.playVictory();
+
+      const folder = folders.find(f => f.id === currentFolderId);
+      const folderName = folder ? folder.name : 'Vocabulary Folder';
+
+      totalScore = round1Score + round2Score + round3Score;
+      const maxPossibleR1 = gameWordList.length * 10;
+      const maxPossibleR2 = gameWordList.length * 15;
+      const maxPossibleR3 = gameR3Questions.length * 20;
+      const maxPossibleTotal = maxPossibleR1 + maxPossibleR2 + maxPossibleR3;
+
+      savePlayerScore(currentFolderId, totalScore);
+      const highScore = getPlayerHighScore(currentFolderId);
+
+      document.getElementById('summaryPlayerName').innerText = `${currentUser.name} (${currentUser.userClass})`;
+      document.getElementById('summaryFolderTopic').innerText = `🏰 ${folderName}`;
+      document.getElementById('summaryR1Score').innerText = `${round1Score} / ${maxPossibleR1} pts`;
+      document.getElementById('summaryR2Score').innerText = `${round2Score} / ${maxPossibleR2} pts`;
+      document.getElementById('summaryR3Score').innerText = `${round3Score} / ${maxPossibleR3} pts`;
+      document.getElementById('summaryHighScore').innerText = `${highScore} pts`;
+      document.getElementById('summaryTotalScore').innerText = `${totalScore} / ${maxPossibleTotal} pts`;
+
+      const giftSection = document.getElementById('fullScoreGiftSection');
+      if (totalScore === maxPossibleTotal && maxPossibleTotal > 0) {
+        giftSection.classList.remove('hidden');
+        renderGiftBoxes();
+      } else {
+        giftSection.classList.add('hidden');
+      }
+
+      showView('viewSummary');
+    }
+
+    function renderGiftBoxes() {
+      const grid = document.getElementById('giftBoxesGrid');
+      const resultDisplay = document.getElementById('giftResultDisplay');
+      grid.innerHTML = '';
+      resultDisplay.classList.add('hidden');
+
+      const shuffledRewards = [...REWARD_OPTIONS].sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < 5; i++) {
+        const box = document.createElement('button');
+        box.className = 'bg-gradient-to-tr from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-extrabold p-3 rounded-2xl shadow-lg border-2 border-amber-300/40 flex flex-col items-center justify-center transition transform hover:scale-105 active:scale-95 group';
+        box.innerHTML = `
+          <span class="text-3xl group-hover:animate-bounce">🎁</span>
+          <span class="text-[10px] font-extrabold uppercase mt-1 text-amber-100">Box ${i+1}</span>
+        `;
+
+        box.onclick = () => revealGiftBox(box, shuffledRewards[i]);
+        grid.appendChild(box);
+      }
+    }
+
+    function revealGiftBox(clickedBox, reward) {
+      audioSynth.playVictory();
+
+      const boxes = document.querySelectorAll('#giftBoxesGrid button');
+      boxes.forEach(b => {
+        b.classList.add('opacity-40', 'pointer-events-none');
+        b.classList.remove('hover:scale-105');
+      });
+
+      clickedBox.classList.remove('opacity-40');
+      clickedBox.classList.add('ring-4', 'ring-amber-300');
+      clickedBox.innerHTML = `
+        <span class="text-3xl">🎉</span>
+        <span class="text-[10px] font-extrabold uppercase mt-1 text-white">OPEN</span>
+      `;
+
+      const resultDisplay = document.getElementById('giftResultDisplay');
+      resultDisplay.innerText = `🎁 You won: ${reward}`;
+      resultDisplay.classList.remove('hidden');
+    }
+
+    function replayGame() {
+      startGame();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
